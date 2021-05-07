@@ -17,10 +17,7 @@ public class ESManagerServiceImpl implements ESManagerService {
         int numShard = (int) request.get("numShard");
         int numReplica = (int) request.get("numReplica");
         try {
-            esClient.createIndex(name, numShard, numReplica);
-            JSONObject success = new JSONObject();
-            success.put("message", "ok");
-            return success;
+            return esClient.createIndex(name, numShard, numReplica);
         } catch (Exception ex) {
             throw ex;
         }
@@ -29,13 +26,19 @@ public class ESManagerServiceImpl implements ESManagerService {
     @Override
     public JSONObject insert(JSONObject request) throws Exception{
         String name = request.get("name").toString();
-        try {
-            esClient.insertData(name);
-            JSONObject success = new JSONObject();
-            success.put("message", "ok");
-            return success;
-        } catch (Exception ex) {
-            throw ex;
+        String data = (request.containsKey("data") || request.get("data") != null) ? request.get("data").toString() : null;
+        if(data == null) {
+            try {
+                return esClient.insertData(name);
+            } catch (Exception ex) {
+                throw ex;
+            }
+        } else {
+            try {
+                return esClient.insertData(name, data);
+            } catch (Exception ex) {
+                throw ex;
+            }
         }
     }
 

@@ -3,7 +3,9 @@ package com.ssol.factory.engine;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -50,7 +52,7 @@ public class ESClient {
         }
     }
 
-    public void createIndex(String indexName, int numShards, int numReplicas) throws Exception {
+    public JSONObject createIndex(String indexName, int numShards, int numReplicas) throws Exception {
         GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
         if(!client.indices().exists(getIndexRequest, RequestOptions.DEFAULT)) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);
@@ -74,17 +76,42 @@ public class ESClient {
 
             CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
             if(!response.isAcknowledged()) throw new Exception("cannot create index");
+            else {
+                JSONObject success = new JSONObject();
+                success.put("message", "complete to create index");
+                return success;
+            }
         } else throw new Exception("index already exists");
     }
 
-    public void insertData(String indexName) throws Exception {
+    public JSONObject insertData(String indexName) throws Exception {
         BulkRequest request = new BulkRequest();
         for(String data : sample) {
             JSONObject obj = new JSONObject();
             obj.put("name", data);
             request.add(new IndexRequest(indexName).source(obj.toJSONString(), XContentType.JSON));
         }
-        client.bulk(request, RequestOptions.DEFAULT);
+        BulkResponse response = client.bulk(request, RequestOptions.DEFAULT);
+        if(response.hasFailures()) throw new Exception("bulk data failed");
+        else {
+            JSONObject success = new JSONObject();
+            success.put("message", "complete to insert 5 sample data");
+            return success;
+        }
+    }
+
+    public JSONObject insertData(String indexName, String data) throws Exception {
+        IndexRequest request = new IndexRequest(indexName);
+        JSONObject obj = new JSONObject();
+        obj.put("name", data);
+        request.source(obj.toJSONString(), XContentType.JSON);
+        IndexResponse response = client.index(request, RequestOptions.DEFAULT);
+        if(response.getShardInfo().getFailed() > 0) throw new Exception("insert data failed");
+        else {
+            JSONObject success = new JSONObject();
+            success.put("message", "complete to insert 1 sample data");
+            return success;
+        }
     }
 
     public JSONObject search(String keyword) throws Exception {
