@@ -5,8 +5,6 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @Service
 public class ESManagerServiceImpl implements ESManagerService {
 
@@ -32,7 +30,7 @@ public class ESManagerServiceImpl implements ESManagerService {
     public JSONObject insert(JSONObject request) throws Exception{
         String name = request.get("name").toString();
         try {
-            esClient.insertData("product");
+            esClient.insertData(name);
             JSONObject success = new JSONObject();
             success.put("message", "ok");
             return success;
